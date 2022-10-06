@@ -85,6 +85,8 @@ function calculate ()  {
     let firstMultiply=operatorsArray.indexOf('*');
     let firstDivide=operatorsArray.indexOf('/');
     let firstCalculated=0;
+    console.log(operatorsArray);
+    offset=0
     while (!(firstMultiply==-1 && firstDivide==-1)) {
 
         if (firstDivide==-1) {
@@ -95,14 +97,14 @@ function calculate ()  {
             firstCalculated=Math.min(firstDivide,firstMultiply)
         }
 
-        result=operate(Number(numbersArray[firstCalculated]),Number(numbersArray[firstCalculated+1]),operatorsArray[firstCalculated]);
+        result=operate(Number(numbersArray[firstCalculated-offset]),Number(numbersArray[firstCalculated+1-offset]),operatorsArray[firstCalculated]);
             
         let temporaryNumbersMD = numbersArray;
         numbersArray=[]; 
         for (let i=0;i<=temporaryNumbersMD.length-1;i++) {
-            if (i==firstCalculated) {
+            if (i==(firstCalculated-offset)) {
                 numbersArray[i]=result;
-            } else if (i<firstCalculated) {
+            } else if (i<(firstCalculated-offset)) {
                 numbersArray[i]=temporaryNumbersMD[i];
             } else {
                 numbersArray[i]=temporaryNumbersMD[i+1];
@@ -118,8 +120,10 @@ function calculate ()  {
         console.log(firstDivide,firstMultiply)
         console.log(result)
         console.log('numbersArray '+numbersArray)
+        offset+=1
     }  
-    
+    operatorsArray=removeChar(operatorsArray, ' ')
+    console.log(operatorsArray)
     for (let k=0;k<=operatorsArray.length-1;k++) {
 
         
@@ -148,3 +152,16 @@ function cancel() {
 cancelButton = document.querySelector('.AC');
 
 cancelButton.addEventListener('click',cancel);
+
+
+ 
+function removeChar(array,char) {
+    let array2=array;
+    array=[];
+    for (let i of array2) {
+        if (i!=char) {
+            array.push(i)
+        };
+    };
+    return array;
+};
