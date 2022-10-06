@@ -1,3 +1,4 @@
+// Basic functions needed for a calculator : 
 function add(a,b) {
     return a+b;
 };
@@ -14,6 +15,7 @@ function divide(a,b) {
     return a/b;
 };
 
+// Global function calling the basic ones :
 function operate(a,b,operator) {
     if (operator=='+') {
         return add(a,b);
@@ -26,7 +28,7 @@ function operate(a,b,operator) {
     }
 }
 
-
+// Style the buttons when mouse is hovering and add their value to a variable to be able to display them
 buttons=document.querySelectorAll('button');
 buttons.forEach(button => {
     button.addEventListener('mouseenter',function(e) {
@@ -50,19 +52,28 @@ buttons.forEach(button => {
     });
 });
 
+// Take care of the special equals button, so that it triggers the calculation 
 equals=document.querySelector('.equals');
 
 equals.addEventListener('mousedown', function(){
-    (evaluate(displayContent))});
+    (store(displayContent))});
 
 equals.addEventListener('mouseup',calculate)
 
-function evaluate(str) {
+// Functions to call when clicking the equals button : 
+
+
+// the store() function takes the display value and stores the numbers in one array and operators in another :
+function store(str) {
+
     let numbers = '';
     let operators = '';
+
     for (let i=0;i<=str.length-1;i++) {
+
         if (isNaN(Number(str[i]))&& str[i]!='.')  {
             numbers+=' ';
+
             if (str[i]=='×') {
                 operators+='*';
             } else if (str[i]=='÷') {
@@ -70,13 +81,26 @@ function evaluate(str) {
             } else {
                 operators+=str[i];
             }
+
         } else {
             numbers+=str[i];
         }
     }
+
     numbersArray=numbers.split(' ');
-    operatorsArray=operators.split('');
-    
+    operatorsArray=operators.split('');   
+}
+
+// the function indexPriority returns the index of the first instance of either '*' or '/' in the operators array.
+function indexPriority (firstDivide,firstMultiply) {
+    if (firstDivide==-1) {
+        firstCalculated=firstMultiply;
+    } else if (firstMultiply==-1) {
+        firstCalculated=firstDivide;
+    }else {
+        firstCalculated=Math.min(firstDivide,firstMultiply);
+    }
+    return firstCalculated
 }
 
 
@@ -85,65 +109,32 @@ function calculate ()  {
     let firstMultiply=operatorsArray.indexOf('*');
     let firstDivide=operatorsArray.indexOf('/');
     let firstCalculated=0;
-    console.log(operatorsArray);
-    offset=0
+    let offset=0 // the offset is due to the length of numbersArray changing after every iteration
+    // as long as we have multiplications and divisions (the loop is there to take into account calculus priorities):
     while (!(firstMultiply==-1 && firstDivide==-1)) {
+        console.log(numbersArray);
+        firstCalculated=indexPriority(firstMultiply,firstDivide)-offset;
+        
+        result=operate(Number(numbersArray[firstCalculated]),Number(numbersArray[firstCalculated+1]),operatorsArray[firstCalculated+offset]);
+        
+        numbersArray=sortNumbers(numbersArray,firstCalculated,result);
 
-        if (firstDivide==-1) {
-            firstCalculated=firstMultiply;
-        } else if (firstMultiply==-1) {
-            firstCalculated=firstDivide;
-        }else {
-            firstCalculated=Math.min(firstDivide,firstMultiply)
-        }
-
-        result=operate(Number(numbersArray[firstCalculated-offset]),Number(numbersArray[firstCalculated+1-offset]),operatorsArray[firstCalculated]);
-            
-        let temporaryNumbersMD = numbersArray;
-        numbersArray=[]; 
-        for (let i=0;i<=temporaryNumbersMD.length-1;i++) {
-            if (i==(firstCalculated-offset)) {
-                numbersArray[i]=result;
-            } else if (i<(firstCalculated-offset)) {
-                numbersArray[i]=temporaryNumbersMD[i];
-            } else {
-                numbersArray[i]=temporaryNumbersMD[i+1];
-            }
-        }
-        operatorsArray[firstCalculated]=' '
-
-        console.log(operatorsArray)
+        operatorsArray[firstCalculated+offset]=' '
 
         firstMultiply=operatorsArray.indexOf('*');
         firstDivide=operatorsArray.indexOf('/');
-
-        console.log(firstDivide,firstMultiply)
-        console.log(result)
-        console.log('numbersArray '+numbersArray)
         offset+=1
-    }  
-    operatorsArray=removeChar(operatorsArray, ' ')
-    console.log(operatorsArray)
-    for (let k=0;k<=operatorsArray.length-1;k++) {
-
-        
-
-        result=operate(Number(numbersArray[0]),Number(numbersArray[1]),operatorsArray[k]);
-        let temporaryNumbers = numbersArray
-        numbersArray = [];
-        numbersArray[0]=result;
-
-        for (let i=1; i<=temporaryNumbers.length-2;i++) {
-            numbersArray[i]=temporaryNumbers[i+1];
-        }
-        console.log('Numbersarray ' +numbersArray+ ' temp '+temporaryNumbers);
-
     }
+
+    operatorsArray=removeChar(operatorsArray, ' ')
+
+    result = calcAddSub(operatorsArray,numbersArray);
     displayContent=result;
     display.textContent=displayContent;
     return result
 }
 
+// Function to call when clicking the AC button, it resets everything.
 function cancel() {
     displayContent='';
     display.textContent=displayContent;
@@ -154,7 +145,7 @@ cancelButton = document.querySelector('.AC');
 cancelButton.addEventListener('click',cancel);
 
 
- 
+// the function removeChar(array,char) removes all instances of a character in an array
 function removeChar(array,char) {
     let array2=array;
     array=[];
@@ -165,3 +156,38 @@ function removeChar(array,char) {
     };
     return array;
 };
+
+// the function sortNumbers sorts out the numbers array so that it can be used again 
+// (the previous result becomes the first element and the rest of the array consists
+// of the numbers that have not been treated yet)
+function sortNumbers(array,index,value) {
+    let temporaryArray=array;
+    array=[];
+    let len =temporaryArray.length-2
+    for (let i=0;i<=len;i++) {
+        if (i==index) {
+            array[i]=value;
+        } else if (i<index) {
+            array[i]=temporaryArray[i];
+        } else {
+            array[i]=temporaryArray[i+1];
+        }
+    }
+    return array
+}
+
+// the function calcAddSub returns the final result as it computes
+// the final additions and substractions
+function calcAddSub(opArray,numArray) {
+    let len = opArray.length-1;
+    let result=0
+    let a=0;
+    let b=0;
+    for (i=0;i<=len;i++) {
+        a = Number(numArray[0]);
+        b = Number(numArray[1]);
+        result=operate(a,b,opArray[i]);
+        numArray=sortNumbers(numArray,0,result)
+    }
+    return result
+}
