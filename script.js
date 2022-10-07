@@ -43,12 +43,39 @@ display= document.querySelector('.display');
 displayContent= '';
 display.textContent= displayContent;
 
+// the function userError updates the display content taking into account possible user errors:
+function userError(e) {
+    let isClickOperator=true;
+    let isLastOperator=true;
+    let lastElement='';
+    if (e.target.textContent!='=') {
+
+        isClickOperator = isNaN(Number(e.target.textContent));
+
+        // make sure we don't start a calculation with an operator, but with a number:
+
+        if (!(displayContent=='' && isClickOperator)) {
+            if (displayContent!='') {
+                lastElement=String(displayContent).charAt(displayContent.length-1);
+                isLastOperator = isNaN(Number(lastElement));
+            } else {
+                isLastOperator=false;
+            }
+                // make sure we don't have an operator following an operator:
+            if (!(isLastOperator && isClickOperator)) {
+
+                // make sure we don't write outside the display div:
+                if (displayContent.length<=18) {
+                    displayContent=displayContent+e.target.textContent;
+                    display.textContent=displayContent;
+                };
+            };
+        };
+    };
+};
 buttons.forEach(button => {
     button.addEventListener('click', function(e) {
-        if (e.target.textContent!='=') {
-            displayContent=displayContent+e.target.textContent;
-            display.textContent=displayContent;
-        };
+        (userError(e));
     });
 });
 
@@ -112,7 +139,6 @@ function calculate ()  {
     let offset=0 // the offset is due to the length of numbersArray changing after every iteration
     // as long as we have multiplications and divisions (the loop is there to take into account calculus priorities):
     while (!(firstMultiply==-1 && firstDivide==-1)) {
-        console.log(numbersArray);
         firstCalculated=indexPriority(firstMultiply,firstDivide)-offset;
         
         result=operate(Number(numbersArray[firstCalculated]),Number(numbersArray[firstCalculated+1]),operatorsArray[firstCalculated+offset]);
@@ -127,10 +153,12 @@ function calculate ()  {
     }
 
     operatorsArray=removeChar(operatorsArray, ' ')
-
-    result = calcAddSub(operatorsArray,numbersArray);
+    if (operatorsArray.length!=0) {
+        result = calcAddSub(operatorsArray,numbersArray);
+    } 
     displayContent=result;
     display.textContent=displayContent;
+
     return result
 }
 
@@ -191,3 +219,4 @@ function calcAddSub(opArray,numArray) {
     }
     return result
 }
+
